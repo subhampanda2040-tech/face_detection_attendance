@@ -35,6 +35,9 @@ while True:
     ret,frame=video.read()
     gray=cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces=facedetect.detectMultiScale(gray, 1.3 ,5)
+    
+    attendances_in_frame = []
+    
     for (x,y,w,h) in faces:
         crop_img=frame[y:y+h, x:x+w, :]
         resized_img=cv2.resize(crop_img, (50,50)).flatten().reshape(1,-1)
@@ -48,25 +51,33 @@ while True:
         cv2.rectangle(frame,(x,y-40),(x+w,y),(50,50,255),-1)
         cv2.putText(frame, str(output[0]), (x,y-15), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 1)
         cv2.rectangle(frame, (x,y), (x+w, y+h), (50,50,255), 1)
-        attendance=[str(output[0]), str(timestamp)]
+        attendances_in_frame.append([str(output[0]), str(timestamp)])
+        
     imgBackground[162:162 + 480, 55:55 + 640] = frame
     cv2.imshow("Frame",imgBackground)
     k=cv2.waitKey(1)
-    if k==ord('o'):
-        speak("Attendance Taken..")
-        time.sleep(5)
-        if exist:
-            with open("Attendance/Attendance_" + date + ".csv", "+a") as csvfile:
-                writer=csv.writer(csvfile)
-                writer.writerow(attendance)
-            csvfile.close()
+    if k==ord('o') or k==ord('O'):
+        if len(attendances_in_frame) > 0:
+            try:
+                if exist:
+                    with open("Attendance/Attendance_" + date + ".csv", "a", newline='') as csvfile:
+                        writer=csv.writer(csvfile)
+                        writer.writerows(attendances_in_frame)
+                else:
+                    with open("Attendance/Attendance_" + date + ".csv", "a", newline='') as csvfile:
+                        writer=csv.writer(csvfile)
+                        writer.writerow(COL_NAMES)
+                        writer.writerows(attendances_in_frame)
+                speak("Attendance Taken..")
+                break
+            except PermissionError:
+                speak("Error. Please close the attendance file and press O again.")
+            except Exception as e:
+                print("Error saving attendance:", e)
+                speak("An error occurred while saving attendance.")
         else:
-            with open("Attendance/Attendance_" + date + ".csv", "+a") as csvfile:
-                writer=csv.writer(csvfile)
-                writer.writerow(COL_NAMES)
-                writer.writerow(attendance)
-            csvfile.close()
-    if k==ord('q'):
+            speak("No face detected. Please face the camera and press O again.")
+    if k==ord('q') or k==ord('Q'):
         break
 video.release()
 cv2.destroyAllWindows()

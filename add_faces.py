@@ -18,7 +18,7 @@ while True:
     for (x,y,w,h) in faces:
         crop_img=frame[y:y+h, x:x+w, :]
         resized_img=cv2.resize(crop_img, (50,50))
-        if len(faces_data)<=100 and i%10==0:
+        if len(faces_data)<100 and i%10==0:
             faces_data.append(resized_img)
         i=i+1
         cv2.putText(frame, str(len(faces_data)), (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (50,50,255), 1)
@@ -31,19 +31,19 @@ video.release()
 cv2.destroyAllWindows()
 
 faces_data=np.asarray(faces_data)
-faces_data=faces_data.reshape(100, -1)
+if len(faces_data) > 0:
+    faces_data=faces_data.reshape(len(faces_data), -1)
 
-
-if 'names.pkl' not in os.listdir('data/'):
-    names=[name]*100
-    with open('data/names.pkl', 'wb') as f:
-        pickle.dump(names, f)
-else:
-    with open('data/names.pkl', 'rb') as f:
-        names=pickle.load(f)
-    names=names+[name]*100
-    with open('data/names.pkl', 'wb') as f:
-        pickle.dump(names, f)
+    if 'names.pkl' not in os.listdir('data/'):
+        names=[name]*len(faces_data)
+        with open('data/names.pkl', 'wb') as f:
+            pickle.dump(names, f)
+    else:
+        with open('data/names.pkl', 'rb') as f:
+            names=pickle.load(f)
+        names=names+[name]*len(faces_data)
+        with open('data/names.pkl', 'wb') as f:
+            pickle.dump(names, f)
 
 if 'faces_data.pkl' not in os.listdir('data/'):
     with open('data/faces_data.pkl', 'wb') as f:
